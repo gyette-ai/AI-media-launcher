@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { HelpCircle } from 'lucide-react'
 import { arrayMove } from '@dnd-kit/sortable'
@@ -20,8 +20,10 @@ import { CategoryInputDialog } from './components/CategoryInputDialog'
 import { DeleteCategoryDialog } from './components/DeleteCategoryDialog'
 import { FilePickerDialog } from './components/FilePickerDialog'
 import { AboutDialog } from './components/AboutDialog'
-import { PerformanceDialog } from './components/PerformanceDialog'
 import { Activity } from 'lucide-react'
+
+// Lazy load PerformanceDialog to optimize initial load
+const PerformanceDialog = lazy(() => import('./components/PerformanceDialog').then(module => ({ default: module.PerformanceDialog })))
 
 interface FavoriteItem {
   id: string
@@ -646,10 +648,12 @@ function App() {
         onClose={() => setAboutDialogOpen(false)}
       />
 
-      <PerformanceDialog
-        isOpen={performanceDialogOpen}
-        onClose={() => setPerformanceDialogOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <PerformanceDialog
+          isOpen={performanceDialogOpen}
+          onClose={() => setPerformanceDialogOpen(false)}
+        />
+      </Suspense>
     </div>
   )
 }

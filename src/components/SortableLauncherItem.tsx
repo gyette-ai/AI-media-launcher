@@ -11,7 +11,7 @@ interface SortableLauncherItemProps {
     onContextMenu: (e: React.MouseEvent) => void
 }
 
-export function SortableLauncherItem({ id, name, icon, onClick, onContextMenu }: SortableLauncherItemProps) {
+export const SortableLauncherItem = React.memo(function SortableLauncherItem({ id, name, icon, onClick, onContextMenu }: SortableLauncherItemProps) {
     const {
         attributes,
         listeners,
@@ -38,4 +38,4 @@ export function SortableLauncherItem({ id, name, icon, onClick, onContextMenu }:
             />
         </div>
     )
-}
+})

@@ -431,65 +431,94 @@ app.whenReady().then(() => {
         }
     })
 
-    // ==========================================
-    // IPC Handlers: System Stats
-    // ==========================================
+    // Cache for static system info to reduce polling overhead
+    let staticStats: {
+        cpuModel: string
+        totalMem: number
+        gpuModel: string | null
+        isNvidia: boolean
+        gpuVendor: string
+    } | null = null
+
     ipcMain.handle('get-system-stats', async () => {
         try {
-            const [cpu, currentLoad, mem, graphics] = await Promise.all([
-                si.cpu(),
+            // 1. Fetch dynamic data that is always fast/needed
+            const [currentLoad, mem] = await Promise.all([
                 si.currentLoad(),
-                si.mem(),
-                si.graphics()
+                si.mem()
             ])
 
-            // GPU Logic: Try to find a discrete GPU first (NVIDIA/AMD), otherwise fallback to the first one
-            // Also filter out 'Microsoft Basic Display Adapter' or similar if possible
+            // 2. Initialize static stats if needed (first run only)
+            if (!staticStats) {
+                const [cpu, graphics] = await Promise.all([
+                    si.cpu(),
+                    si.graphics()
+                ])
 
-            // DEBUG: Log all controllers to see what we get
-            console.log('GPU Controllers:', JSON.stringify(graphics.controllers, null, 2))
+                // GPU Logic: Try to find a discrete GPU first
+                let gpu = graphics.controllers.find(c =>
+                    (c.vendor.toLowerCase().includes('nvidia') || c.vendor.toLowerCase().includes('amd') || c.vendor.toLowerCase().includes('advanced micro devices')) &&
+                    !c.model.toLowerCase().includes('integrated')
+                )
 
-            let gpu = graphics.controllers.find(c =>
-                (c.vendor.toLowerCase().includes('nvidia') || c.vendor.toLowerCase().includes('amd') || c.vendor.toLowerCase().includes('advanced micro devices')) &&
-                !c.model.toLowerCase().includes('integrated')
-            )
+                if (!gpu && graphics.controllers.length > 0) {
+                    gpu = graphics.controllers[0]
+                }
 
-            if (!gpu && graphics.controllers.length > 0) {
-                gpu = graphics.controllers[0]
+                staticStats = {
+                    cpuModel: `${cpu.manufacturer} ${cpu.brand}`,
+                    totalMem: mem.total,
+                    gpuModel: gpu ? gpu.model : null,
+                    isNvidia: gpu?.vendor.toLowerCase().includes('nvidia') || false,
+                    gpuVendor: gpu?.vendor.toLowerCase() || ''
+                }
             }
 
-            // Fallback for NVIDIA GPU stats if systeminformation fails to get them
-            let gpuLoad = gpu?.utilizationGpu || 0
-            let gpuTemp = gpu?.temperatureGpu || 0
+            // 3. Get GPU Load/Temp
+            let gpuLoad = 0
+            let gpuTemp = 0
 
-            if (gpu && gpu.vendor.toLowerCase().includes('nvidia') && (gpuLoad === 0 && gpuTemp === 0)) {
+            if (staticStats.isNvidia) {
+                // Fast path for NVIDIA: Use nvidia-smi directly, skip heavy si.graphics() call
                 try {
                     const { exec } = require('child_process')
                     const util = require('util')
                     const execAsync = util.promisify(exec)
 
-                    // Query nvidia-smi for utilization and temperature
                     const { stdout } = await execAsync('nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits')
                     const [load, temp] = stdout.trim().split(',').map((v: string) => parseFloat(v))
 
                     if (!isNaN(load)) gpuLoad = load
                     if (!isNaN(temp)) gpuTemp = temp
                 } catch (e) {
-                    console.error('Failed to query nvidia-smi:', e)
+                    // Fail silently or log if needed
                 }
+            } else {
+                // Standard path for others: Must call si.graphics() to get load
+                const graphics = await si.graphics()
+                let gpu = graphics.controllers.find(c =>
+                    c.model === staticStats?.gpuModel
+                )
+
+                if (!gpu && graphics.controllers.length > 0) {
+                    gpu = graphics.controllers[0]
+                }
+
+                gpuLoad = gpu?.utilizationGpu || 0
+                gpuTemp = gpu?.temperatureGpu || 0
             }
 
             return {
                 cpu: {
-                    model: `${cpu.manufacturer} ${cpu.brand}`,
+                    model: staticStats.cpuModel,
                     load: currentLoad.currentLoad
                 },
                 memory: {
                     used: mem.active,
-                    total: mem.total
+                    total: staticStats.totalMem
                 },
-                gpu: gpu ? {
-                    model: gpu.model,
+                gpu: staticStats.gpuModel ? {
+                    model: staticStats.gpuModel,
                     load: gpuLoad,
                     temperature: gpuTemp
                 } : null
