@@ -18,7 +18,7 @@ export function LauncherItem({ name, icon, onClick, onContextMenu }: LauncherIte
 
     const renderIcon = () => {
         // Handle file paths (images)
-        if (icon && (icon.startsWith('file://') || icon.startsWith('data:'))) {
+        if (icon && (icon.startsWith('file://') || icon.startsWith('data:') || icon.startsWith('media://'))) {
             return <img src={icon} alt={name} className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 object-contain drop-shadow-md" />
         }
 

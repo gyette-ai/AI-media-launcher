@@ -32,6 +32,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     getFileIcon: (path: string) => ipcRenderer.invoke('get-file-icon', path),
     getSystemPath: (name: string) => ipcRenderer.invoke('get-system-path', name),
     getDrives: () => ipcRenderer.invoke('get-drives'),
+    getSystemStats: () => ipcRenderer.invoke('get-system-stats'),
 
     // Window Controls
     minimizeWindow: () => ipcRenderer.invoke('minimize-window'),

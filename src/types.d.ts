@@ -2,6 +2,11 @@ declare global {
     interface IElectronAPI {
         launchFile: (path: string) => Promise<{ success: boolean; error?: string }>
         openExternal: (url: string) => Promise<{ success: boolean; error?: string }>
+        getSystemStats: () => Promise<{
+            cpu: { model: string; load: number }
+            memory: { used: number; total: number }
+            gpu: { model: string; load: number; temperature: number } | null
+        } | null>
         readDir: (path: string) => Promise<Array<{ name: string; isDirectory: boolean; path: string }>>
         openFileDialog: () => Promise<string | null>
         openDirectoryDialog: () => Promise<string | null>

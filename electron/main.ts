@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, protocol, net } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs/promises'
+import si from 'systeminformation'
 
 // The built directory structure
 process.env.DIST = path.join(__dirname, '../dist')
@@ -56,6 +57,19 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
+    // Register custom protocol for loading local resources (images)
+    protocol.handle('media', (request) => {
+        const url = request.url
+        // Remove protocol and leading slashes to get the raw path (e.g., "D:/path/to/file")
+        const filePath = url.replace(/^media:\/+/, '')
+        const decodedPath = decodeURIComponent(filePath)
+
+        console.log('Media Protocol Request:', { url, filePath, decodedPath })
+
+        // Construct a proper file URL
+        return net.fetch(`file:///${decodedPath}`)
+    })
+
     createWindow()
 
     // ==========================================
@@ -414,6 +428,75 @@ app.whenReady().then(() => {
         } catch (error) {
             console.error('Failed to empty directory:', error)
             return { success: false, error: String(error) }
+        }
+    })
+
+    // ==========================================
+    // IPC Handlers: System Stats
+    // ==========================================
+    ipcMain.handle('get-system-stats', async () => {
+        try {
+            const [cpu, currentLoad, mem, graphics] = await Promise.all([
+                si.cpu(),
+                si.currentLoad(),
+                si.mem(),
+                si.graphics()
+            ])
+
+            // GPU Logic: Try to find a discrete GPU first (NVIDIA/AMD), otherwise fallback to the first one
+            // Also filter out 'Microsoft Basic Display Adapter' or similar if possible
+
+            // DEBUG: Log all controllers to see what we get
+            console.log('GPU Controllers:', JSON.stringify(graphics.controllers, null, 2))
+
+            let gpu = graphics.controllers.find(c =>
+                (c.vendor.toLowerCase().includes('nvidia') || c.vendor.toLowerCase().includes('amd') || c.vendor.toLowerCase().includes('advanced micro devices')) &&
+                !c.model.toLowerCase().includes('integrated')
+            )
+
+            if (!gpu && graphics.controllers.length > 0) {
+                gpu = graphics.controllers[0]
+            }
+
+            // Fallback for NVIDIA GPU stats if systeminformation fails to get them
+            let gpuLoad = gpu?.utilizationGpu || 0
+            let gpuTemp = gpu?.temperatureGpu || 0
+
+            if (gpu && gpu.vendor.toLowerCase().includes('nvidia') && (gpuLoad === 0 && gpuTemp === 0)) {
+                try {
+                    const { exec } = require('child_process')
+                    const util = require('util')
+                    const execAsync = util.promisify(exec)
+
+                    // Query nvidia-smi for utilization and temperature
+                    const { stdout } = await execAsync('nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits')
+                    const [load, temp] = stdout.trim().split(',').map((v: string) => parseFloat(v))
+
+                    if (!isNaN(load)) gpuLoad = load
+                    if (!isNaN(temp)) gpuTemp = temp
+                } catch (e) {
+                    console.error('Failed to query nvidia-smi:', e)
+                }
+            }
+
+            return {
+                cpu: {
+                    model: `${cpu.manufacturer} ${cpu.brand}`,
+                    load: currentLoad.currentLoad
+                },
+                memory: {
+                    used: mem.active,
+                    total: mem.total
+                },
+                gpu: gpu ? {
+                    model: gpu.model,
+                    load: gpuLoad,
+                    temperature: gpuTemp
+                } : null
+            }
+        } catch (error) {
+            console.error('Failed to get system stats:', error)
+            return null
         }
     })
 })

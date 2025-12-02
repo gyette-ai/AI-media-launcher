@@ -20,6 +20,8 @@ import { CategoryInputDialog } from './components/CategoryInputDialog'
 import { DeleteCategoryDialog } from './components/DeleteCategoryDialog'
 import { FilePickerDialog } from './components/FilePickerDialog'
 import { AboutDialog } from './components/AboutDialog'
+import { PerformanceDialog } from './components/PerformanceDialog'
+import { Activity } from 'lucide-react'
 
 interface FavoriteItem {
   id: string
@@ -59,6 +61,12 @@ function App() {
   const [categoryInputDialog, setCategoryInputDialog] = useState<{ visible: boolean; mode: 'add' | 'edit'; initialValue?: string; categoryId?: string } | null>(null)
   const [deleteCategoryDialog, setDeleteCategoryDialog] = useState<{ visible: boolean; categoryId: string; categoryName: string } | null>(null)
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
+  const [performanceDialogOpen, setPerformanceDialogOpen] = useState(false)
+
+  // Auto-close performance panel when view changes
+  useEffect(() => {
+    setPerformanceDialogOpen(false)
+  }, [view])
 
   useEffect(() => {
     // Load favorites on startup
@@ -338,8 +346,9 @@ function App() {
     if (changeIconDialog) {
       const path = await window.ipcRenderer.openImageDialog()
       if (path) {
-        // Convert local path to file URL for display
-        const fileUrl = `file://${path.replace(/\\/g, '/')}`
+        // Convert local path to media URL for display
+        // Use triple slash to ensure drive letter is treated as path, not host
+        const fileUrl = `media:///${path.replace(/\\/g, '/')}`
         handleSaveIcon(fileUrl)
       }
     }
@@ -612,6 +621,16 @@ function App() {
         onSelect={handleFileSelected}
       />
 
+      {/* Performance Button */}
+      {view === 'launcher' && (
+        <button
+          onClick={() => setPerformanceDialogOpen(!performanceDialogOpen)}
+          className={`fixed bottom-6 right-20 p-3 bg-white/5 hover:bg-ai-accent/20 text-gray-400 hover:text-ai-accent rounded-full backdrop-blur-md border border-white/10 hover:border-ai-accent/50 shadow-lg transition-all duration-300 z-40 group ${performanceDialogOpen ? 'text-ai-accent border-ai-accent/50 bg-ai-accent/10' : ''}`}
+        >
+          <Activity size={24} className="group-hover:scale-110 transition-transform duration-300" />
+        </button>
+      )}
+
       {/* About Button */}
       {view === 'launcher' && (
         <button
@@ -625,6 +644,11 @@ function App() {
       <AboutDialog
         isOpen={aboutDialogOpen}
         onClose={() => setAboutDialogOpen(false)}
+      />
+
+      <PerformanceDialog
+        isOpen={performanceDialogOpen}
+        onClose={() => setPerformanceDialogOpen(false)}
       />
     </div>
   )
