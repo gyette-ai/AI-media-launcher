@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { HelpCircle } from 'lucide-react'
 import { arrayMove } from '@dnd-kit/sortable'
 import { LauncherGrid } from './components/LauncherGrid'
 import { TitleBar } from './components/TitleBar'
@@ -17,6 +19,7 @@ import { CategorySelectionDialog } from './components/CategorySelectionDialog'
 import { CategoryInputDialog } from './components/CategoryInputDialog'
 import { DeleteCategoryDialog } from './components/DeleteCategoryDialog'
 import { FilePickerDialog } from './components/FilePickerDialog'
+import { AboutDialog } from './components/AboutDialog'
 
 interface FavoriteItem {
   id: string
@@ -55,6 +58,7 @@ function App() {
   const [categoryContextMenu, setCategoryContextMenu] = useState<{ visible: boolean; x: number; y: number; categoryId: string } | null>(null)
   const [categoryInputDialog, setCategoryInputDialog] = useState<{ visible: boolean; mode: 'add' | 'edit'; initialValue?: string; categoryId?: string } | null>(null)
   const [deleteCategoryDialog, setDeleteCategoryDialog] = useState<{ visible: boolean; categoryId: string; categoryName: string } | null>(null)
+  const [aboutDialogOpen, setAboutDialogOpen] = useState(false)
 
   useEffect(() => {
     // Load favorites on startup
@@ -455,44 +459,58 @@ function App() {
     <div className="h-screen w-screen overflow-hidden text-foreground flex flex-col relative">
       <Background />
       <TitleBar />
-      <div className="p-8 pt-14 flex flex-col h-full overflow-hidden">
-        {view === 'launcher' ? (
-          <>
-            <header className="mb-6">
-              <h1 className="text-3xl font-bold text-primary tracking-tight mb-2">AI Media Launcher</h1>
-              <p className="text-muted-foreground mb-6">Your personal command center</p>
-              <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search favorites..." />
-            </header>
-
-            <CategoryTabs
-              categories={categories}
-              activeCategory={activeCategory}
-              onSelect={setActiveCategory}
-              onAddCategory={handleAddCategory}
-              onContextMenu={handleCategoryContextMenu}
-            />
-
-            <main className="flex-1 overflow-y-auto">
-              <LauncherGrid
-                items={getFilteredItems()}
-                onLaunch={handleLaunch}
-                onAdd={handleAdd}
-                onContextMenu={handleContextMenu}
-                onReorder={handleReorder}
-              />
-            </main>
-          </>
-        ) : (
-          <div className="flex-1 h-full">
-            <button
-              onClick={() => setView('launcher')}
-              className="mb-4 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+      <div className="p-8 pt-12 flex flex-col h-full overflow-hidden">
+        <AnimatePresence mode="wait">
+          {view === 'launcher' ? (
+            <motion.div
+              key="launcher"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col h-full overflow-hidden"
             >
-              ← Back to Launcher
-            </button>
-            <FileExplorer initialPath={explorerPath} onClose={() => setView('launcher')} />
-          </div>
-        )}
+              <header className="mb-4">
+                <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search favorites..." />
+              </header>
+
+              <CategoryTabs
+                categories={categories}
+                activeCategory={activeCategory}
+                onSelect={setActiveCategory}
+                onAddCategory={handleAddCategory}
+                onContextMenu={handleCategoryContextMenu}
+              />
+
+              <main className="flex-1 overflow-y-auto">
+                <LauncherGrid
+                  items={getFilteredItems()}
+                  onLaunch={handleLaunch}
+                  onAdd={handleAdd}
+                  onContextMenu={handleContextMenu}
+                  onReorder={handleReorder}
+                />
+              </main>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="explorer"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1 h-full flex flex-col"
+            >
+              <button
+                onClick={() => setView('launcher')}
+                className="mb-4 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 w-fit"
+              >
+                ← Back to Launcher
+              </button>
+              <FileExplorer initialPath={explorerPath} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Context Menu & Dialogs */}
@@ -592,6 +610,21 @@ function App() {
         isOpen={filePickerDialog}
         onClose={() => setFilePickerDialog(false)}
         onSelect={handleFileSelected}
+      />
+
+      {/* About Button */}
+      {view === 'launcher' && (
+        <button
+          onClick={() => setAboutDialogOpen(true)}
+          className="fixed bottom-6 right-6 p-3 bg-white/5 hover:bg-ai-accent/20 text-gray-400 hover:text-ai-accent rounded-full backdrop-blur-md border border-white/10 hover:border-ai-accent/50 shadow-lg transition-all duration-300 z-40 group"
+        >
+          <HelpCircle size={24} className="group-hover:rotate-12 transition-transform duration-300" />
+        </button>
+      )}
+
+      <AboutDialog
+        isOpen={aboutDialogOpen}
+        onClose={() => setAboutDialogOpen(false)}
       />
     </div>
   )

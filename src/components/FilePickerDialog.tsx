@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Folder, File } from 'lucide-react'
+import { X, Folder } from 'lucide-react'
 import { FileExplorer } from './FileExplorer'
 
 interface FilePickerDialogProps {
@@ -22,7 +22,7 @@ export function FilePickerDialog({ isOpen, onClose, onSelect }: FilePickerDialog
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="w-[900px] h-[700px] bg-[#121212] border border-white/5 rounded-xl shadow-2xl flex flex-col overflow-hidden"
+                        className="w-[95vw] max-w-[900px] h-[90vh] max-h-[700px] bg-[#121212] border border-white/5 rounded-xl shadow-2xl flex flex-col overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header */}
@@ -40,7 +40,6 @@ export function FilePickerDialog({ isOpen, onClose, onSelect }: FilePickerDialog
                         <div className="flex-1 overflow-hidden p-4 bg-[#0f0f10]">
                             <FileExplorer
                                 initialPath="My PC"
-                                onClose={() => { }}
                                 onPathChange={setCurrentPath}
                                 mode="picker"
                             />

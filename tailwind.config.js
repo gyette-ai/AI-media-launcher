@@ -9,6 +9,7 @@ module.exports = {
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],
                 mono: ['JetBrains Mono', 'monospace'],
+                display: ['Nexa', 'Orbitron', 'sans-serif'],
             },
             colors: {
                 background: "hsl(var(--background))",

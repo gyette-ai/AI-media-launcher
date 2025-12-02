@@ -1,5 +1,7 @@
 declare global {
     interface IElectronAPI {
+        launchFile: (path: string) => Promise<{ success: boolean; error?: string }>
+        openExternal: (url: string) => Promise<{ success: boolean; error?: string }>
         readDir: (path: string) => Promise<Array<{ name: string; isDirectory: boolean; path: string }>>
         openFileDialog: () => Promise<string | null>
         openDirectoryDialog: () => Promise<string | null>

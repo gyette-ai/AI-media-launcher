@@ -25,7 +25,7 @@ export function TitleBar() {
         <div className="h-10 bg-transparent flex items-center justify-between px-4 app-drag-region fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-ai-accent/50 shadow-[0_0_10px_rgba(0,240,255,0.5)]" />
-                <span className="text-xs font-mono text-gray-400 tracking-wider">AI MEDIA LAUNCHER</span>
+                <span className="text-xs font-bold text-gray-400 tracking-widest font-display">LAUNCH DECK</span>
             </div>
             <div className="flex items-center gap-1 no-drag">
                 <button onClick={handleMinimize} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">

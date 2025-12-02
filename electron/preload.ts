@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 
     // Custom APIs
     launchFile: (path: string) => ipcRenderer.invoke('launch-file', path),
+    openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
     getFavorites: () => ipcRenderer.invoke('get-favorites'),
     saveFavorites: (favorites: any[]) => ipcRenderer.invoke('save-favorites', favorites),
     readDir: (path: string) => ipcRenderer.invoke('read-dir', path),

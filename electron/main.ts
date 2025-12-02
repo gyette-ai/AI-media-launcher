@@ -71,6 +71,16 @@ app.whenReady().then(() => {
         }
     })
 
+    ipcMain.handle('open-external', async (_event, url: string) => {
+        try {
+            await shell.openExternal(url)
+            return { success: true }
+        } catch (error) {
+            console.error('Failed to open external URL:', error)
+            return { success: false, error: String(error) }
+        }
+    })
+
     // ==========================================
     // IPC Handlers: Favorites Management
     // ==========================================

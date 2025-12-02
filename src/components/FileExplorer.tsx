@@ -14,7 +14,6 @@ interface FileItem {
 
 interface FileExplorerProps {
     initialPath: string
-    onClose: () => void
     onPathChange?: (path: string) => void
     mode?: 'default' | 'picker'
 }
@@ -68,7 +67,7 @@ const getFileIcon = (filename: string) => {
     return <File size={40} className="text-gray-500" />
 }
 
-export function FileExplorer({ initialPath, onClose, onPathChange, mode = 'default' }: FileExplorerProps) {
+export function FileExplorer({ initialPath, onPathChange, mode = 'default' }: FileExplorerProps) {
     const [currentPath, setCurrentPath] = useState(initialPath)
     const [files, setFiles] = useState<FileItem[]>([])
     const [history, setHistory] = useState<string[]>([initialPath])
@@ -1031,7 +1030,7 @@ export function FileExplorer({ initialPath, onClose, onPathChange, mode = 'defau
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="absolute bottom-4 right-4 z-40 flex bg-background/80 backdrop-blur-md border border-border rounded-lg p-1 shadow-lg">
+                <div className="fixed bottom-6 right-6 z-40 flex bg-background/80 backdrop-blur-md border border-border rounded-lg p-1 shadow-lg">
                     <button
                         onClick={() => setViewMode('list')}
                         className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}`}

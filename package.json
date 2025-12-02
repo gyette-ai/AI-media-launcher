@@ -1,7 +1,7 @@
 {
-    "name": "ai-media-launcher",
+    "name": "launch-deck",
     "private": true,
-    "version": "1.0.0",
+    "version": "1.1.0",
     "main": "dist-electron/main.js",
     "scripts": {
         "dev": "vite",
@@ -36,23 +36,24 @@
         "vite-plugin-electron": "^0.15.4",
         "vite-plugin-electron-renderer": "^0.14.5"
     },
+    "description": "LaunchDeck - Your personal command center",
+    "author": "User",
     "build": {
-        "appId": "com.aimedialauncher.app",
-        "productName": "AI Media Launcher",
+        "appId": "com.launchdeck.app",
+        "productName": "LaunchDeck",
         "directories": {
             "output": "release"
         },
         "win": {
             "target": "nsis",
-            "icon": "public/icon.png"
+            "icon": "public/icon.png",
+            "forceCodeSigning": false
         },
         "mac": {
-            "target": "dmg",
-            "icon": "public/icon.png"
+            "target": "dmg"
         },
         "linux": {
-            "target": "AppImage",
-            "icon": "public/icon.png"
+            "target": "AppImage"
         }
     }
 }
